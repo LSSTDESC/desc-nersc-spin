@@ -1,0 +1,125 @@
+#
+# to use this template, substitute the following throughout:
+#
+# - for Postgres: your stack name
+# - for PostgresUser: your Postgres user name
+# - for ProjectDir: your community file system project directory
+# - for UserID: your numeric user ID that should own the dump files
+# - for GroupID: your numeric group ID that should own the dump files
+
+version: '2'
+
+services:
+    db:
+
+        # versions 11, 10, 9.6 and 9 are also available
+        image: postgres:12.4-alpine
+        #image: postgres:11-alpine
+        #image: postgres:10-alpine
+        #image: postgres:9.6-alpine
+        #image: postgres:9-alpine
+
+        # uncomment only if access outside of Spin is needed
+        ports:
+            - 5432:5432/tcp
+
+        stdin_open: true
+        tty: true
+
+        volumes:
+            - db.postgres-desc-dev:/var/lib/postgresql/data
+
+        environment:
+            POSTGRES_USER: desc_admin
+            POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+            TZ: US/Pacific
+
+        cap_drop:
+            - ALL
+        cap_add:
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            - SETGID
+            - SETUID
+
+        secrets:
+            - mode: '0444'
+              uid: '0'
+              gid: '0'
+              source: db.postgres-desc-dev.postgres_password
+              target: postgres_password
+
+        # uncomment to set configuration options as needed
+        # (this is cleaner than creating your own image with a custom config file)
+        command: postgres -c max_connections=500
+        #    - -c
+        #    - shared_buffers=32MB
+
+        labels:
+
+            # prevent running stale (cached) image on restart or upgrade
+            io.rancher.container.pull_image: always
+
+    db-dump:
+
+        # versions 11, 10, 9.6 and 9 are also available
+        image: registry.nersc.gov/library/spin/postgres-pg_dump:12-alpine
+        #image: registry.nersc.gov/library/spin/postgres-pg_dump:11-alpine
+        #image: registry.nersc.gov/library/spin/postgres-pg_dump:10-alpine
+        #image: registry.nersc.gov/library/spin/postgres-pg_dump:9.6-alpine
+        #image: registry.nersc.gov/library/spin/postgres-pg_dump:9-alpine
+
+        stdin_open: true
+        tty: true
+
+        volumes:
+        - /global/cfs/cdirs/lsst/groups/spin/pg_dump/:/pg_dump
+
+        # further customize filenames, retention (-1 for indefinite), and other
+        # settings as needed
+        environment:
+            POSTGRES_HOST: db
+            POSTGRES_USER: desc_admin
+            POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+            POSTGRES_DATABASE: all
+            POSTGRES_DUMP_DIR: /pg_dump
+            POSTGRES_DUMP_FILE_BASE: db-dump.sql.gz
+            POSTGRES_DUMP_RETAIN_DAYS: '7'
+            TZ: US/Pacific
+
+        cap_drop:
+            - ALL
+
+        secrets:
+            - mode: '0400'
+              uid: '70981'
+              gid: '57177'
+              source: db.postgres-desc-dev.postgres_password
+              target: postgres_password
+
+        user: 70981:57177
+
+        labels:
+
+            # prevent running stale (cached) image on restart or upgrade
+            io.rancher.container.pull_image: always
+
+            # run at 11am (UTC)
+            cron.schedule: 0 0 11 * * *
+
+            # override default behavior to restart container after backup process completes
+            io.rancher.container.start_once: 'true'
+
+#
+# note: secrets and volumes must have been created manually
+#
+
+secrets:
+    db.postgres-desc-dev.postgres_password:
+        external: true
+
+volumes:
+    db.postgres-desc-dev:
+        driver: rancher-nfs
+        external: true

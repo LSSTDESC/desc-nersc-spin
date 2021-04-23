@@ -1,0 +1,144 @@
+#
+# to use this template, substitute the following throughout:
+#
+# - for Postgres: your stack name
+# - for PostgresUser: your Postgres user name
+# - for ProjectDir: your community file system project directory
+# - for UserID: your numeric user ID that should own the dump files
+# - for GroupID: your numeric group ID that should own the dump files
+
+version: '2'
+
+services:
+    util-pool:
+         #         #image: pgbouncer/pgbouncer:1.15.0
+        image: edoburu/pgbouncer:1.15.0
+
+        environment:
+            DB_USER: gen3_devel
+            DB_PASSWORD: xxxxxxxx
+            DB_HOST: db
+            DB_NAME: desc_dm_gen3_spin
+            POOL_MODE: transaction
+            ADMIN_USERS: postgres,gen3_devel
+
+        ports:
+            - "5432:5432/tcp"
+        depends_on:
+            - db
+        cap_drop:
+            - ALL
+        cap_add:
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            - SETGID
+            - SETUID
+
+    db:
+
+        image: postgres:13-alpine
+
+        # uncomment only if access outside of Spin is needed
+        #ports:
+        #    - "5432:5432/tcp"
+
+        stdin_open: true
+        tty: true
+
+        volumes:
+            - db.postgres-13-desc-prod:/var/lib/postgresql/data
+
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+            TZ: US/Pacific
+
+        cap_drop:
+            - ALL
+        cap_add:
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            - SETGID
+            - SETUID
+
+        secrets:
+            - mode: '0444'
+              uid: '0'
+              gid: '0'
+              source: db.postgres-13-desc-prod.postgres_password
+              target: postgres_password
+
+        # uncomment to set configuration options as needed
+        # (this is cleaner than creating your own image with a custom config file)
+        command: postgres -c max_connections=500
+        #    - -c
+        #    - shared_buffers=32MB
+
+        labels:
+
+            # prevent running stale (cached) image on restart or upgrade
+            io.rancher.container.pull_image: always
+
+    db-dump:
+
+        image: registry.nersc.gov/library/spin/postgres-pg_dump:13-alpine
+
+        stdin_open: true
+        tty: true
+
+        volumes:
+        - /global/cfs/cdirs/lsst/groups/spin/pg_dump_13/:/pg_dump
+
+        # further customize filenames, retention (-1 for indefinite), and other
+        # settings as needed
+        environment:
+            POSTGRES_HOST: db
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+            POSTGRES_DATABASE: all
+            POSTGRES_DUMP_DIR: /pg_dump
+            POSTGRES_DUMP_FILE_BASE: db-dump.sql.gz
+            POSTGRES_DUMP_RETAIN_DAYS: '7'
+            TZ: US/Pacific
+
+        cap_drop:
+            - ALL
+
+        secrets:
+            - mode: '0400'
+              uid: '70981'
+              gid: '57177'
+              source: db.postgres-13-desc-prod.postgres_password
+              target: postgres_password
+
+        user: 70981:57177
+
+        labels:
+
+            # prevent running stale (cached) image on restart or upgrade
+            io.rancher.container.pull_image: always
+
+            # run at 12am (UTC)
+            cron.schedule: 0 0 12 * * *
+
+            # override default behavior to restart container after backup process completes
+            io.rancher.container.start_once: 'true'
+
+        depends_on:
+            - db
+
+#
+# note: secrets and volumes must have been created manually
+#
+
+secrets:
+    db.postgres-13-desc-prod.postgres_password:
+        external: true
+        #file: postgres_password
+
+volumes:
+    db.postgres-13-desc-prod:
+        driver: rancher-nfs
+        external: true
