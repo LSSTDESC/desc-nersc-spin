@@ -3,9 +3,7 @@
 Based on [NERSC's spin-recipes](https://github.com/NERSC/spin-recipes/tree/master/postgres)
 
 ## How To Update in Spin
-See: [https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#ex
-ample-4-upgrade-the-image-used-in-a-stack](https://docs.nersc.gov/services/spin/
-rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack)
+See: [https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack](https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack)
 
 * Log into Cori
 * module load spin
