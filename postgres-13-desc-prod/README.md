@@ -19,6 +19,10 @@ See: [https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#ex
 * April 2021 adding pgbouncer support and moved to postgres 13
 * March 2021 Added explicit setting of max_connections = 500 as part of start up config
 
+## To Do
+* Set up auth_file for pgbouncer
+* Fix up scheduled pg_dump of DB contents
+
 ## Initial Set up
 
 * `pg_dump` on postgres-desc-dev to download Jim's initial tests using Postgres 12.4
