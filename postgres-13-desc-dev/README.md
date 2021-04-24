@@ -2,7 +2,7 @@
 
 Based on [NERSC's spin-recipes](https://github.com/NERSC/spin-recipes/tree/master/postgres)
 
-## How To Update in Spin
+## How To Update Postgres Deployment in Spin
 See: [https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack](https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack)
 
 * Log into Cori
@@ -14,10 +14,17 @@ See: [https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#ex
 rancher up --upgrade --confirm-upgrade
 
 
-## Updates
+## Deployment Updates
 
 * April 2021 adding pgbouncer support and moved to postgres 13
 * March 2021 Added explicit setting of max_connections = 500 as part of start up config
+
+## To Do
+* Set up auth_file for pgbouncer
+* Dump postgres-13-desc-prod to this DB as a back up 
+
+## Initial Set up
+See: https://github.com/LSSTDESC/desc-nersc-spin/blob/main/postgres-13-desc-prod/README.md#initial-set-up
 
 
 ### postgres
