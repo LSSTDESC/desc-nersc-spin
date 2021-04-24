@@ -2,25 +2,37 @@
 
 Based on [NERSC's spin-recipes](https://github.com/NERSC/spin-recipes/tree/master/postgres)
 
-## How To Update in Spin
+## How To Update the Postgres Deployment in Spin
 See: [https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack](https://docs.nersc.gov/services/spin/rancher1/getting_started/lesson-3/#example-4-upgrade-the-image-used-in-a-stack)
 
 * Log into Cori
-* module load spin
-* export RANCHER_ENVIRONMENT=prod-cattle
+* `module load spin`
+* `export RANCHER_ENVIRONMENT=prod-cattle`
 * git clone this repo and make changes to docker-compose as needed
-* rancher up --upgrade
+* `rancher up --upgrade`
 * If all looks good, confirm the upgrade
-rancher up --upgrade --confirm-upgrade
+`rancher up --upgrade --confirm-upgrade`
 
 
-## Updates
+## Deployment updates
 
 * April 2021 adding pgbouncer support and moved to postgres 13
 * March 2021 Added explicit setting of max_connections = 500 as part of start up config
 
+## Initial Set up
 
-### postgres
+* `pg_dump` on postgres-desc-dev to download Jim's initial tests using Postgres 12.4
+   -  `shifter --image=postgres:13-alpine pg_dump -h db.postgres-desc-dev.dev-cattle.stable.spin.nersc.org -U gen3_devel -p 5432 -d desc_dm_gen3_spin -f ./mydump.sql`
+* Stood up the Postgres 13 service on RANCHER_ENVIRONMENT=prod-cattle without pgbouncer service
+  - comment out the service in the docker-compose and rancher-compose yamls and enable port 5432 for the db service 
+* Set up desc_dm_gen3_spin DB and enable btree_gist  
+  - `CREATE EXTENSION IF NOT EXISTS btree_gist;`
+* Dump data into new DB: 
+  - `shifter --image=postgres:13-alpine psql -h db.postgres-13-desc-prod.prod-cattle.stable.spin.nersc.org -U gen3_devel -p 5432 -d desc_dm_gen3_spin -f ./mydump.sql`
+* Now upgrade the deployment after modifying the yamls to use pgbouncer`
+
+
+### postgres -- Notes from NERSC's original spin-recipes github repo
 
 This recipe shows a working example of Postgres on Spin using the official managed image
 with an automated backup routine.
