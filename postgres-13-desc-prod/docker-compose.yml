@@ -19,6 +19,8 @@ services:
             DB_PASSWORD: xxxxxxxx
             DB_HOST: db
             DB_NAME: desc_dm_gen3_spin
+            DEFAULT_POOL_SIZE: 128
+            MAX_CLIENT_CONN: 10000
             POOL_MODE: transaction
             ADMIN_USERS: postgres,gen3_devel
 
@@ -72,7 +74,7 @@ services:
 
         # uncomment to set configuration options as needed
         # (this is cleaner than creating your own image with a custom config file)
-        command: postgres -c max_connections=500
+        command: postgres -c max_connections=128
         #    - -c
         #    - shared_buffers=32MB
 
